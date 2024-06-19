@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"name": "IncludeDir",
+			"path": "include"
+		},
+		{
+			"name": "try",
+			"path": "lectures_final/try"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"string": "cpp",
+			"iosfwd": "cpp",
+			"vector": "cpp",
+			"string.h": "c"
+		}
+	}
+}

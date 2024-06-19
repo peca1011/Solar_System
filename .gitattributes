@@ -1,0 +1,5 @@
+# .gitattributes
+libs/win/draco.lib filter=lfs diff=lfs merge=lfs -text
+libs/win/assimp-vc143-mt.lib filter=lfs diff=lfs merge=lfs -text
+lectures_final/try/try.ilk filter=lfs diff=lfs merge=lfs -text
+lectures_final/try/try.pdb filter=lfs diff=lfs merge=lfs -text

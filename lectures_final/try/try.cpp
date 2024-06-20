@@ -1,5 +1,3 @@
-
-
 /*
 OpenGL coordinate system (right-handed)
 positive X axis points right
@@ -10,7 +8,7 @@ positive Z axis points "outside" the screen
                               Y
                               |
                               |
-                              |________X
+                              |__X
                              /
                             /
                            /
@@ -36,7 +34,7 @@ positive Z axis points "outside" the screen
 
 // another check related to OpenGL loader
 // confirm that GLAD didn't include windows.h
-#ifdef _WINDOWS_
+#ifdef WINDOWS
     #error windows.h was included!
 #endif
 
@@ -56,7 +54,7 @@ positive Z axis points "outside" the screen
 #include <stb_image/stb_image.h>
 
 // number of lights in the scene
-#define NR_LIGHTS 1
+#define NR_LIGHTS 3
 
 // dimensions of application's window
 GLuint screenWidth = 1200, screenHeight = 900;
@@ -109,9 +107,6 @@ GLboolean wireframe = GL_FALSE;
 // we create a camera. We pass the initial position as a paramenter to the constructor. The last boolean tells if we want a camera "anchored" to the ground
 Camera camera(glm::vec3(0.0f, 0.0f, 7.0f), GL_TRUE);
 
-// Uniforms to be passed to shaders
-// point light positions
-glm::vec3 lightPos0 = glm::vec3(0.0f, 0.0f, 10.0f);
 
 // specular and ambient components
 GLfloat specularColor[] = {1.0,1.0,1.0};
@@ -209,7 +204,7 @@ int main()
     Shader skybox_shader("skybox.vert", "skybox.frag");
 
     // we create the Shader Program used for objects (which presents different subroutines we can switch)
-    Shader illumination_shader = Shader("11_illumination_models_ML.vert", "12_illumination_models_ML.frag");
+    Shader illumination_shader = Shader("illumination_models_ML.vert", "illumination_models_ML.frag");
     // we parse the Shader Program to search for the number and names of the subroutines.
     // the names are placed in the shaders vector
     SetupShader(illumination_shader.Program);
@@ -222,10 +217,25 @@ int main()
     // we load the model(s)
     Model cubeModel("../../models/cube.obj"); // used for the environment map
     Model sunModel("../../models/sun.obj");
+    Model mercuryModel("../../models/mercury.obj");
     Model venusModel("../../models/venus.obj");
+    Model earthModel("../../models/earth.obj");
+    Model marsModel("../../models/sphere.obj");
+    Model jupiterModel("../../models/sphere.obj");
+    Model saturnModel("../../models/sphere.obj");
+    Model uranusModel("../../models/sphere.obj");
+    Model neptuneModel("../../models/sphere.obj");
 
-    textureID.push_back(LoadTexture("../../textures/sun.jpg"));
-    textureID.push_back(LoadTexture("../../textures/venus.jpg"));
+    textureID.push_back(LoadTexture("../../textures/sun/suns.jpg"));
+    textureID.push_back(LoadTexture("../../textures/mercury/mercury.jpg"));
+    textureID.push_back(LoadTexture("../../textures/venus/venus.jpg"));
+    textureID.push_back(LoadTexture("../../textures/earth/earth.jpg"));
+    textureID.push_back(LoadTexture("../../textures/mars.jpg"));
+    textureID.push_back(LoadTexture("../../textures/jupiter.jpg"));
+    textureID.push_back(LoadTexture("../../textures/saturn.jpg"));
+    textureID.push_back(LoadTexture("../../textures/uranus.jpg"));
+    textureID.push_back(LoadTexture("../../textures/neptune.jpg"));
+
 
     // Projection matrix: FOV angle, aspect ratio, near and far planes
     glm::mat4 projection = glm::perspective(45.0f, (float)screenWidth/(float)screenHeight, 0.1f, 10000.0f);
@@ -237,12 +247,39 @@ int main()
     glm::mat4 sunModelMatrix = glm::mat4(1.0f);
     glm::mat3 sunNormalMatrix = glm::mat3(1.0f);
 
+    glm::mat4 mercuryModelMatrix = glm::mat4(1.0f);
+    glm::mat3 mercuryNormalMatrix = glm::mat3(1.0f);
+
     glm::mat4 venusModelMatrix = glm::mat4(1.0f);
     glm::mat3 venusNormalMatrix = glm::mat3(1.0f);
 
+    glm::mat4 earthModelMatrix = glm::mat4(1.0f);
+    glm::mat3 earthNormalMatrix = glm::mat3(1.0f);
+
+    glm::mat4 marsModelMatrix = glm::mat4(1.0f);
+    glm::mat3 marsNormalMatrix = glm::mat3(1.0f);
+
+    glm::mat4 jupiterModelMatrix = glm::mat4(1.0f);
+    glm::mat3 jupiterNormalMatrix = glm::mat3(1.0f);
+
+    glm::mat4 saturnModelMatrix = glm::mat4(1.0f);
+    glm::mat3 saturnNormalMatrix = glm::mat3(1.0f);
+
+    glm::mat4 uranusModelMatrix = glm::mat4(1.0f);
+    glm::mat3 uranusNormalMatrix = glm::mat3(1.0f);
+
+    glm::mat4 neptuneModelMatrix = glm::mat4(1.0f);
+    glm::mat3 neptuneNormalMatrix = glm::mat3(1.0f);
+    // Initialize shader
+    Shader myShader("vertex_shader.vert", "fragment_shader.frag");
+
+    // Light and view positions
+    glm::vec3 lightPos(0.0f, 0.0f, 0.0f); // Assuming the sun is at origin
+    glm::vec3 viewPos = camera.Position;  // Use your camera's position
+
     // Rendering loop: this code is executed at each frame
     while(!glfwWindowShouldClose(window))
-    {
+    { 
         // we determine the time passed from the beginning
         // and we calculate time difference between current frame rendering and the previous one
         GLfloat currentFrame = glfwGetTime();
@@ -304,12 +341,8 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(view));
 
-        // we pass each light position to the shader
-        for (GLuint i = 0; i < NR_LIGHTS; i++)
-        {
-            string number = to_string(i);
-            glUniform3fv(glGetUniformLocation(illumination_shader.Program, ("lights[" + number + "]").c_str()), 1, glm::value_ptr(lightPos0));
-        }
+        
+        
 
         // we activate the texture with id 1, and we bind the id to the loaded texture data
         glActiveTexture(GL_TEXTURE1);
@@ -348,27 +381,50 @@ int main()
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID[0]);
 
-        // Set uniform variables for the shader
+    // Use the shader program
+        myShader.Use();
+
+// Set light uniforms
+        glUniform3f(glGetUniformLocation(myShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+        glUniform3f(glGetUniformLocation(myShader.Program, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
+        glUniform3f(glGetUniformLocation(myShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f); // White light
+        glUniform3f(glGetUniformLocation(myShader.Program, "objectColor"), 1.0f, 1.0f, 1.0f); // White object color
+
+// Update the view matrix based on the camera position
+        glm::mat4 view = camera.GetViewMatrix();
+        glUniformMatrix4fv(glGetUniformLocation(myShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(myShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
         glUniform1f(kaLocation, Ka);
         glUniform1f(kdLocation, Kd);
         glUniform1f(ksLocation, Ks);
         glUniform1i(textureLocation, 0);
-        glUniform1f(repeatLocation, 2.0f); //davor repeat
+        glUniform1f(repeatLocation, 2.0f);
 
-        // Set transformation Matrix for the sun
-        sunModelMatrix = glm::mat4(1.0f);
-        sunNormalMatrix = glm::mat3(1.0f);
-        sunModelMatrix = glm::translate(sunModelMatrix, glm::vec3(-1.5f, 0.0f, 0.0f));
+// Set transformation matrices for the sun
+        glm::mat4 sunModelMatrix = glm::mat4(1.0f);
+        glm::mat3 sunNormalMatrix = glm::mat3(1.0f);
+        sunModelMatrix = glm::translate(sunModelMatrix, lightPos);
+       
         sunModelMatrix = glm::rotate(sunModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
         sunModelMatrix = glm::scale(sunModelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
-        sunNormalMatrix = glm::inverseTranspose(glm::mat3(view*sunModelMatrix));
-        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
-        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
+        sunNormalMatrix = glm::inverseTranspose(glm::mat3(view * sunModelMatrix));
 
-        // we render the obj
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
+        //glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
+
+// Pass matrices to the shader
+        glUniformMatrix4fv(glGetUniformLocation(myShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
+        // glUniformMatrix3fv(glGetUniformLocation(myShader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
+
+// Bind the sun texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID[0]); // Sun texture
+        glUniform1i(glGetUniformLocation(myShader.Program, "tex"), 0);
+
+// Draw the sun model
         sunModel.Draw();
-       
-       /////////////VENUS////////////
+       /////////////MERCURY////////////
         // Activate the texture with id 1, and bind the id to our loaded texture data
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID[1]);
@@ -380,10 +436,36 @@ int main()
         glUniform1i(textureLocation, 0);
         glUniform1f(repeatLocation, 2.0f);
 
+
+        /// Set transformation Matrix for venus
+        mercuryModelMatrix = glm::mat4(1.0f);
+        mercuryNormalMatrix = glm::mat3(1.0f);
+        mercuryModelMatrix = glm::translate(mercuryModelMatrix, glm::vec3(0.25f, 0.0f, 0.0f));
+        mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        mercuryModelMatrix = glm::scale(mercuryModelMatrix, glm::vec3(0.0035f, 0.0035f, 0.0035f));
+        
+        mercuryNormalMatrix = glm::inverseTranspose(glm::mat3(view*mercuryModelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mercuryModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(mercuryNormalMatrix));
+
+        // we render the obj
+        mercuryModel.Draw();
+       /////////////VENUS////////////
+        // Activate the texture with id 1, and bind the id to our loaded texture data
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID[2]);
+
+        // Set uniform variables for the shader
+        glUniform1f(kaLocation, Ka);
+        glUniform1f(kdLocation, Kd);
+        glUniform1f(ksLocation, Ks);
+        glUniform1i(textureLocation, 0);
+        glUniform1f(repeatLocation, 2.0f);
+
         /// Set transformation Matrix for venus
         venusModelMatrix = glm::mat4(1.0f);
         venusNormalMatrix = glm::mat3(1.0f);
-        venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(1.5f, 0.0f, 0.0f));
+        venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(0.50f, 0.0f, 0.0f));
         venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
         venusModelMatrix = glm::scale(venusModelMatrix, glm::vec3(0.0087f, 0.0087f, 0.0087f));
         
@@ -393,7 +475,140 @@ int main()
 
         // we render the obj
         venusModel.Draw();
+         /////////////EARTH////////////
+        // Activate the texture with id 1, and bind the id to our loaded texture data
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID[3]);
 
+        // Set uniform variables for the shader
+        glUniform1f(kaLocation, Ka);
+        glUniform1f(kdLocation, Kd);
+        glUniform1f(ksLocation, Ks);
+        glUniform1i(textureLocation, 0);
+        glUniform1f(repeatLocation, 2.0f);
+
+        /// Set transformation Matrix for venus
+        earthModelMatrix = glm::mat4(1.0f);
+        earthNormalMatrix = glm::mat3(1.0f);
+        earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(0.75f, 0.0f, 0.0f));
+        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        earthModelMatrix = glm::scale(earthModelMatrix, glm::vec3(0.0092f, 0.0092f, 0.0092f));
+        earthNormalMatrix = glm::inverseTranspose(glm::mat3(view*earthModelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(earthModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(earthNormalMatrix));
+
+        // we render the obj
+        earthModel.Draw();
+
+        /////////////MARS////////////
+        // Activate the texture with id 1, and bind the id to our loaded texture data
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID[4]);
+
+        // Set uniform variables for the shader
+        glUniform1f(kaLocation, Ka);
+        glUniform1f(kdLocation, Kd);
+        glUniform1f(ksLocation, Ks);
+        glUniform1i(textureLocation, 0);
+        glUniform1f(repeatLocation, 2.0f);
+        // Mars transformation
+        marsModelMatrix = glm::mat4(1.0f);
+        marsNormalMatrix = glm::mat3(1.0f);
+        marsModelMatrix = glm::translate(marsModelMatrix, glm::vec3(1.0f, 0.0f, 0.0f)); // Position relative to the sun
+        marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        marsModelMatrix = glm::scale(marsModelMatrix, glm::vec3(0.0049f,0.0049f,0.0049f)); // Scale relative to the sun
+        marsNormalMatrix = glm::inverseTranspose(glm::mat3(view * marsModelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(marsModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(marsNormalMatrix));
+        marsModel.Draw();
+
+        /////////////JUPITER////////////
+        // Activate the texture with id 1, and bind the id to our loaded texture data
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID[5]);
+
+        // Set uniform variables for the shader
+        glUniform1f(kaLocation, Ka);
+        glUniform1f(kdLocation, Kd);
+        glUniform1f(ksLocation, Ks);
+        glUniform1i(textureLocation, 0);
+        glUniform1f(repeatLocation, 2.0f);
+        // Jupiter transformation
+        jupiterModelMatrix = glm::mat4(1.0f);
+        jupiterNormalMatrix = glm::mat3(1.0f);
+        jupiterModelMatrix = glm::translate(jupiterModelMatrix, glm::vec3(1.25f, 0.0f, 0.0f)); // Position relative to the sun
+        jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        jupiterModelMatrix = glm::scale(jupiterModelMatrix, glm::vec3(0.102f,0.102f,0.102f)); // Scale relative to the sun
+        jupiterNormalMatrix = glm::inverseTranspose(glm::mat3(view * jupiterModelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(jupiterModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(jupiterNormalMatrix));
+        jupiterModel.Draw();
+         /////////////SATURN///////////
+        // Activate the texture with id 1, and bind the id to our loaded texture data
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID[6]);
+
+        // Set uniform variables for the shader
+        glUniform1f(kaLocation, Ka);
+        glUniform1f(kdLocation, Kd);
+        glUniform1f(ksLocation, Ks);
+        glUniform1i(textureLocation, 0);
+        glUniform1f(repeatLocation, 2.0f);
+        // Saturn transformation
+        saturnModelMatrix = glm::mat4(1.0f);
+        saturnNormalMatrix = glm::mat3(1.0f);
+        saturnModelMatrix = glm::translate(saturnModelMatrix, glm::vec3(1.5f, 0.0f, 0.0f)); // Position relative to the sun
+        saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        saturnModelMatrix = glm::scale(saturnModelMatrix, glm::vec3(0.086f,0.086f,0.086f)); // Scale relative to the sun
+        saturnNormalMatrix = glm::inverseTranspose(glm::mat3(view * saturnModelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(saturnModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(saturnNormalMatrix));
+        saturnModel.Draw();
+
+         /////////////URANUS////////////
+        // Activate the texture with id 1, and bind the id to our loaded texture data
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID[7]);
+
+        // Set uniform variables for the shader
+        glUniform1f(kaLocation, Ka);
+        glUniform1f(kdLocation, Kd);
+        glUniform1f(ksLocation, Ks);
+        glUniform1i(textureLocation, 0);
+        glUniform1f(repeatLocation, 2.0f);
+        // Uranus transformation
+        uranusModelMatrix = glm::mat4(1.0f);
+        uranusNormalMatrix = glm::mat3(1.0f);
+        uranusModelMatrix = glm::translate(uranusModelMatrix, glm::vec3(1.75f, 0.0f, 0.0f)); // Position relative to the sun
+        uranusModelMatrix = glm::rotate(uranusModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        uranusModelMatrix = glm::scale(uranusModelMatrix, glm::vec3(0.036f,0.036f,0.036f)); // Scale relative to the sun
+        uranusNormalMatrix = glm::inverseTranspose(glm::mat3(view * uranusModelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(uranusModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(uranusNormalMatrix));
+        uranusModel.Draw();
+
+
+         /////////////NEPTUNE////////////
+        // Activate the texture with id 1, and bind the id to our loaded texture data
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID[8]);
+
+        // Set uniform variables for the shader
+        glUniform1f(kaLocation, Ka);
+        glUniform1f(kdLocation, Kd);
+        glUniform1f(ksLocation, Ks);
+        glUniform1i(textureLocation, 0);
+        glUniform1f(repeatLocation, 2.0f);
+        // Neptune transformation
+        neptuneModelMatrix = glm::mat4(1.0f);
+        neptuneNormalMatrix = glm::mat3(1.0f);
+        neptuneModelMatrix = glm::translate(neptuneModelMatrix, glm::vec3(2.0f, 0.0f, 0.0f)); // Position relative to the sun
+        neptuneModelMatrix = glm::rotate(neptuneModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        neptuneModelMatrix = glm::scale(neptuneModelMatrix, glm::vec3(0.035f,0.035f,0.035f)); // Scale relative to the sun
+        neptuneNormalMatrix = glm::inverseTranspose(glm::mat3(view * neptuneModelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(neptuneModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(neptuneNormalMatrix));
+        neptuneModel.Draw();
 
         /////////////////// SKYBOX ////////////////////////////////////////////////
         // we use the cube to attach the 6 textures of the environment map.

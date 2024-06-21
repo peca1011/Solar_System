@@ -95,9 +95,46 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 // rotation angle on Y axis
-GLfloat orientationY = 0.0f;
+GLfloat orientationYSun, orientationYMercury, orientationYVenus, orientationYEarth, orientationYMars, orientationYJupiter, orientationYSaturn, orientationYUranus, orientationYNeptune= 0.0f;
 // rotation speed on Y axis
-GLfloat spin_speed = 30.0f;
+GLfloat spin_speedSun = 30.0f;
+GLfloat spin_speedMercury = 47.87f;
+GLfloat spin_speedVenus = 35.02f;
+GLfloat spin_speedEarth = 29.78f;
+GLfloat spin_speedMars = 24.07f;
+GLfloat spin_speedJupiter = 13.07f;
+GLfloat spin_speedSaturn = 9.69f;
+GLfloat spin_speedUranus = 6.81f;
+GLfloat spin_speedNeptune = 5.43f;
+
+// Declare the rotation angles for each planet's own rotation
+GLfloat rotationYMercury;
+GLfloat rotationYVenus;
+GLfloat rotationYEarth;
+GLfloat rotationYMars;
+GLfloat rotationYJupiter;
+GLfloat rotationYSaturn;
+GLfloat rotationYUranus;
+GLfloat rotationYNeptune;
+
+// Declare the rotation speeds for each planet's own rotation
+GLfloat rotation_speedMercury = 5.0f;
+GLfloat rotation_speedVenus = 3.0f;
+GLfloat rotation_speedEarth = 1.0f;
+GLfloat rotation_speedMars = 0.5f;
+GLfloat rotation_speedJupiter = 2.5f;
+GLfloat rotation_speedSaturn = 2.0f;
+GLfloat rotation_speedUranus = 1.5f;
+GLfloat rotation_speedNeptune = 1.0f;
+
+GLfloat orbitRadiusMercury = 1.0f;
+GLfloat orbitRadiusVenus = 1.5f;
+GLfloat orbitRadiusEarth = 2.0f;
+GLfloat orbitRadiusMars = 2.5f;
+GLfloat orbitRadiusJupiter = 3.0f;
+GLfloat orbitRadiusSaturn = 3.5f;
+GLfloat orbitRadiusUranus = 4.0f;
+GLfloat orbitRadiusNeptune = 4.5f;
 // boolean to start/stop animated rotation on Y angle
 GLboolean spinning = GL_TRUE;
 
@@ -219,7 +256,7 @@ int main()
     Model sunModel("../../models/sun.obj");
     Model mercuryModel("../../models/mercury.obj");
     Model venusModel("../../models/venus.obj");
-    Model earthModel("../../models/earth.obj");
+    Model earthModel("../../models/sphere.obj");
     Model marsModel("../../models/sphere.obj");
     Model jupiterModel("../../models/sphere.obj");
     Model saturnModel("../../models/sphere.obj");
@@ -277,6 +314,8 @@ int main()
     glm::vec3 lightPos(0.0f, 0.0f, 0.0f); // Assuming the sun is at origin
     glm::vec3 viewPos = camera.Position;  // Use your camera's position
 
+    //glm::vec3 lightPos2(10.0f, 0.0f, 0.0f); // Position of the new light source on the right side
+    //glm::vec3 lightColor2(1.0f, 1.0f, 1.0f); // Color of the new light source (white light)
     // Rendering loop: this code is executed at each frame
     while(!glfwWindowShouldClose(window))
     { 
@@ -305,7 +344,25 @@ int main()
 
         // if animated rotation is activated, than we increment the rotation angle using delta time and the rotation speed parameter
         if (spinning)
-          orientationY+=(deltaTime*spin_speed);
+          orientationYSun+=(deltaTime*spin_speedSun);
+          orientationYMercury += (deltaTime * spin_speedMercury);
+          orientationYVenus += (deltaTime * spin_speedVenus);
+          orientationYEarth += (deltaTime * spin_speedEarth);
+          orientationYMars += (deltaTime * spin_speedMars);
+          orientationYJupiter += (deltaTime * spin_speedJupiter);
+          orientationYSaturn += (deltaTime * spin_speedSaturn);
+          orientationYUranus += (deltaTime * spin_speedUranus);
+          orientationYNeptune += (deltaTime * spin_speedNeptune);
+          // Update the rotation angles for planets' own rotations
+          rotationYMercury += (deltaTime * rotation_speedMercury);
+          rotationYVenus += (deltaTime * rotation_speedVenus);
+          rotationYEarth += (deltaTime * rotation_speedEarth);
+          rotationYMars += (deltaTime * rotation_speedMars);
+          rotationYJupiter += (deltaTime * rotation_speedJupiter);
+          rotationYSaturn += (deltaTime * rotation_speedSaturn);
+          rotationYUranus += (deltaTime * rotation_speedUranus);
+          rotationYNeptune += (deltaTime * rotation_speedNeptune);
+          
            /////////////////// PLANE ////////////////////////////////////////////////
          // We render a plane under the objects. We apply the Blinn-Phong model only, and we do not apply the rotation applied to the other objects.
         illumination_shader.Use();
@@ -345,7 +402,7 @@ int main()
         
 
         // we activate the texture with id 1, and we bind the id to the loaded texture data
-        glActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID[1]);
 
         // we pass the id of the texture (= to number X in GL_TEXTUREX at line 327) and the number of repetitions for the plane
@@ -360,7 +417,7 @@ int main()
         // we search inside the Shader Program the name of the subroutine currently selected, and we get the numerical index
         // GLuint index = glGetSubroutineIndex(reflection_shader.Program, GL_FRAGMENT_SHADER, shaders[current_subroutine].c_str());
         // we activate the subroutine using the index (this is where shaders swapping happens)
-        glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &index);
+        //glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &index);
 
 
         // We search inside the Shader Program the name of the subroutine currently selected, and we get the numerical index
@@ -390,6 +447,10 @@ int main()
         glUniform3f(glGetUniformLocation(myShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f); // White light
         glUniform3f(glGetUniformLocation(myShader.Program, "objectColor"), 1.0f, 1.0f, 1.0f); // White object color
 
+// Set the second light (from the right)
+        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "light2.position"), lightPos2.x, lightPos2.y, lightPos2.z);
+        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "light2.color"), lightColor2.x, lightColor2.y, lightColor2.z);
+
 // Update the view matrix based on the camera position
         glm::mat4 view = camera.GetViewMatrix();
         glUniformMatrix4fv(glGetUniformLocation(myShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -406,7 +467,7 @@ int main()
         glm::mat3 sunNormalMatrix = glm::mat3(1.0f);
         sunModelMatrix = glm::translate(sunModelMatrix, lightPos);
        
-        sunModelMatrix = glm::rotate(sunModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        sunModelMatrix = glm::rotate(sunModelMatrix, glm::radians(orientationYSun), glm::vec3(0.0f, 1.0f, 0.0f));
         sunModelMatrix = glm::scale(sunModelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
         sunNormalMatrix = glm::inverseTranspose(glm::mat3(view * sunModelMatrix));
 
@@ -418,8 +479,8 @@ int main()
         // glUniformMatrix3fv(glGetUniformLocation(myShader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
 
 // Bind the sun texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID[0]); // Sun texture
+       // glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, textureID[0]); // Sun texture
         glUniform1i(glGetUniformLocation(myShader.Program, "tex"), 0);
 
 // Draw the sun model
@@ -441,7 +502,9 @@ int main()
         mercuryModelMatrix = glm::mat4(1.0f);
         mercuryNormalMatrix = glm::mat3(1.0f);
         mercuryModelMatrix = glm::translate(mercuryModelMatrix, glm::vec3(0.25f, 0.0f, 0.0f));
-        mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(orientationYMercury), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::translate(mercuryModelMatrix, glm::vec3(orbitRadiusMercury, 0.0f, 0.0f));
+        mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(rotationYMercury), glm::vec3(0.0f, 1.0f, 0.0f));
         mercuryModelMatrix = glm::scale(mercuryModelMatrix, glm::vec3(0.0035f, 0.0035f, 0.0035f));
         
         mercuryNormalMatrix = glm::inverseTranspose(glm::mat3(view*mercuryModelMatrix));
@@ -466,7 +529,9 @@ int main()
         venusModelMatrix = glm::mat4(1.0f);
         venusNormalMatrix = glm::mat3(1.0f);
         venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(0.50f, 0.0f, 0.0f));
-        venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(orientationYVenus), glm::vec3(0.0f, 1.0f, 0.0f));
+        venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(orbitRadiusVenus, 0.0f, 0.0f));
+        venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(rotationYVenus), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
         venusModelMatrix = glm::scale(venusModelMatrix, glm::vec3(0.0087f, 0.0087f, 0.0087f));
         
         venusNormalMatrix = glm::inverseTranspose(glm::mat3(view*venusModelMatrix));
@@ -487,11 +552,13 @@ int main()
         glUniform1i(textureLocation, 0);
         glUniform1f(repeatLocation, 2.0f);
 
-        /// Set transformation Matrix for venus
+        /// Set transformation Matrix for eart
         earthModelMatrix = glm::mat4(1.0f);
         earthNormalMatrix = glm::mat3(1.0f);
         earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(0.75f, 0.0f, 0.0f));
-        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(orientationYEarth), glm::vec3(0.0f, 1.0f, 0.0f));
+        earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(orbitRadiusEarth, 0.0f, 0.0f));
+        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(rotationYEarth), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
         earthModelMatrix = glm::scale(earthModelMatrix, glm::vec3(0.0092f, 0.0092f, 0.0092f));
         earthNormalMatrix = glm::inverseTranspose(glm::mat3(view*earthModelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(earthModelMatrix));
@@ -515,7 +582,9 @@ int main()
         marsModelMatrix = glm::mat4(1.0f);
         marsNormalMatrix = glm::mat3(1.0f);
         marsModelMatrix = glm::translate(marsModelMatrix, glm::vec3(1.0f, 0.0f, 0.0f)); // Position relative to the sun
-        marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(orientationYMars), glm::vec3(0.0f, 1.0f, 0.0f));
+        marsModelMatrix = glm::translate(marsModelMatrix, glm::vec3(orbitRadiusMars, 0.0f, 0.0f));
+        marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(rotationYMars), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
         marsModelMatrix = glm::scale(marsModelMatrix, glm::vec3(0.0049f,0.0049f,0.0049f)); // Scale relative to the sun
         marsNormalMatrix = glm::inverseTranspose(glm::mat3(view * marsModelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(marsModelMatrix));
@@ -537,7 +606,9 @@ int main()
         jupiterModelMatrix = glm::mat4(1.0f);
         jupiterNormalMatrix = glm::mat3(1.0f);
         jupiterModelMatrix = glm::translate(jupiterModelMatrix, glm::vec3(1.25f, 0.0f, 0.0f)); // Position relative to the sun
-        jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(orientationYJupiter), glm::vec3(0.0f, 1.0f, 0.0f));
+        jupiterModelMatrix = glm::translate(jupiterModelMatrix, glm::vec3(orbitRadiusJupiter, 0.0f, 0.0f));
+        jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(rotationYJupiter), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
         jupiterModelMatrix = glm::scale(jupiterModelMatrix, glm::vec3(0.102f,0.102f,0.102f)); // Scale relative to the sun
         jupiterNormalMatrix = glm::inverseTranspose(glm::mat3(view * jupiterModelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(jupiterModelMatrix));
@@ -558,7 +629,9 @@ int main()
         saturnModelMatrix = glm::mat4(1.0f);
         saturnNormalMatrix = glm::mat3(1.0f);
         saturnModelMatrix = glm::translate(saturnModelMatrix, glm::vec3(1.5f, 0.0f, 0.0f)); // Position relative to the sun
-        saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(orientationYSaturn), glm::vec3(0.0f, 1.0f, 0.0f));
+        saturnModelMatrix = glm::translate(saturnModelMatrix, glm::vec3(orbitRadiusSaturn, 0.0f, 0.0f));
+        saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(rotationYSaturn), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
         saturnModelMatrix = glm::scale(saturnModelMatrix, glm::vec3(0.086f,0.086f,0.086f)); // Scale relative to the sun
         saturnNormalMatrix = glm::inverseTranspose(glm::mat3(view * saturnModelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(saturnModelMatrix));
@@ -580,7 +653,9 @@ int main()
         uranusModelMatrix = glm::mat4(1.0f);
         uranusNormalMatrix = glm::mat3(1.0f);
         uranusModelMatrix = glm::translate(uranusModelMatrix, glm::vec3(1.75f, 0.0f, 0.0f)); // Position relative to the sun
-        uranusModelMatrix = glm::rotate(uranusModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        uranusModelMatrix = glm::rotate(uranusModelMatrix, glm::radians(orientationYUranus), glm::vec3(0.0f, 1.0f, 0.0f));
+        uranusModelMatrix = glm::translate(uranusModelMatrix, glm::vec3(orbitRadiusUranus, 0.0f, 0.0f)); // Translation to orbit radius
+        uranusModelMatrix = glm::rotate(uranusModelMatrix, glm::radians(rotationYUranus), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
         uranusModelMatrix = glm::scale(uranusModelMatrix, glm::vec3(0.036f,0.036f,0.036f)); // Scale relative to the sun
         uranusNormalMatrix = glm::inverseTranspose(glm::mat3(view * uranusModelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(uranusModelMatrix));
@@ -603,7 +678,9 @@ int main()
         neptuneModelMatrix = glm::mat4(1.0f);
         neptuneNormalMatrix = glm::mat3(1.0f);
         neptuneModelMatrix = glm::translate(neptuneModelMatrix, glm::vec3(2.0f, 0.0f, 0.0f)); // Position relative to the sun
-        neptuneModelMatrix = glm::rotate(neptuneModelMatrix, glm::radians(orientationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        neptuneModelMatrix = glm::rotate(neptuneModelMatrix, glm::radians(orientationYNeptune), glm::vec3(0.0f, 1.0f, 0.0f));
+        neptuneModelMatrix = glm::translate(neptuneModelMatrix, glm::vec3(orbitRadiusNeptune, 0.0f, 0.0f)); // Translation to orbit radius
+        neptuneModelMatrix = glm::rotate(neptuneModelMatrix, glm::radians(rotationYNeptune), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
         neptuneModelMatrix = glm::scale(neptuneModelMatrix, glm::vec3(0.035f,0.035f,0.035f)); // Scale relative to the sun
         neptuneNormalMatrix = glm::inverseTranspose(glm::mat3(view * neptuneModelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(neptuneModelMatrix));
@@ -618,8 +695,8 @@ int main()
         glDepthFunc(GL_LEQUAL);
         skybox_shader.Use();
         // we activate the cube map
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, textureCube);
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_CUBE_MAP, textureCube);
          // we pass projection and view matrices to the Shader Program of the skybox
         glUniformMatrix4fv(glGetUniformLocation(skybox_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
         // to have the background fixed during camera movements, we have to remove the translations from the view matrix

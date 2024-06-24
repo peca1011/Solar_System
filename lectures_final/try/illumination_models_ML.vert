@@ -27,13 +27,11 @@ Universita' degli Studi di Milano
 layout (location = 0) in vec3 position;
 // vertex normal in world coordinate
 layout (location = 1) in vec3 normal;
-layout (location = 1) in vec2 UV;
-
+layout (location = 2) in vec2 UV;
 
 // the numbers used for the location in the layout qualifier are the positions of the vertex attribute
 // as defined in the Mesh class
 
- 
 // vectors of lights positions (passed from the application)
 uniform vec3 lights[NR_LIGHTS];
 
@@ -66,18 +64,18 @@ void main(){
 
   // vertex position in ModelView coordinate (see the last line for the application of projection)
   // when I need to use coordinates in camera coordinates, I need to split the application of model and view transformations from the projection transformations
-  vec4 mvPosition = viewMatrix * modelMatrix * vec4( position, 1.0 );
+  vec4 mvPosition = viewMatrix * modelMatrix * vec4(position, 1.0);
 
   // view direction, negated to have vector from the vertex to the camera
   vViewPosition = -mvPosition.xyz;
 
   // transformations are applied to the normal
-  vNormal = normalize( normalMatrix * normal );
+  vNormal = normalize(normalMatrix * normal);
 
   // light incidence directions for all the lights (in view coordinate)
-  for (int i=0;i<NR_LIGHTS;i++)
+  for (int i = 0; i < NR_LIGHTS; i++)
   {
-    vec4 lightPos = viewMatrix  * vec4(lights[i], 1.0);;
+    vec4 lightPos = viewMatrix * vec4(lights[i], 1.0);
     lightDirs[i] = lightPos.xyz - mvPosition.xyz;
   }
 

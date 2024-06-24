@@ -91,9 +91,10 @@ GLfloat lastX, lastY;
 bool firstMouse = true;
 
 // parameters for time calculation (for animations)
-GLfloat deltaTime = 0.0f;
+GLfloat deltaTime = 5.0f;
 GLfloat lastFrame = 0.0f;
 
+GLfloat rotationSaturn = 45.0f;
 // rotation angle on Y axis
 GLfloat orientationYSun, orientationYMercury, orientationYVenus, orientationYEarth, orientationYMars, orientationYJupiter, orientationYSaturn, orientationYUranus, orientationYNeptune= 0.0f;
 // rotation speed on Y axis
@@ -274,10 +275,10 @@ int main()
     Model sunModel("../../models/sun.obj");
     Model mercuryModel("../../models/mercury.obj");
     Model venusModel("../../models/venus.obj");
-    Model earthModel("../../models/sphere.obj");
+    Model earthModel("../../models/earth.obj");
     Model marsModel("../../models/sphere.obj");
     Model jupiterModel("../../models/sphere.obj");
-    Model saturnModel("../../models/sphere.obj");
+    Model saturnModel("../../models/saturn.obj");
     Model uranusModel("../../models/sphere.obj");
     Model neptuneModel("../../models/sphere.obj");
 
@@ -490,6 +491,13 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "sunNormalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
 
+
+        // Setzen der Lichtpositionen
+        glm::vec3 lightPositions[NR_LIGHTS] = { glm::vec3(1.0f, 1.0f, 1.0f) }; // Beispielhafte Lichtpositionen
+        for (int i = 0; i < NR_LIGHTS; ++i) {
+            std::string uniformName = "lights[" + std::to_string(i) + "]";
+            glUniform3fv(glGetUniformLocation(illumination_shader.Program, uniformName.c_str()), 1, glm::value_ptr(lightPositions[i]));
+        }
     //Draw the sun model
         sunModel.Draw();
 // Set light uniforms
@@ -527,22 +535,30 @@ int main()
         glUniform1i(textureLocation, 0);
         glUniform1f(repeatLocation, 2.0f);
 
-
-        /// Set transformation Matrix for venus
+        // Mercury transformation
         mercuryModelMatrix = glm::mat4(1.0f);
         mercuryNormalMatrix = glm::mat3(1.0f);
-        mercuryModelMatrix = glm::translate(mercuryModelMatrix, glm::vec3(0.25f, 0.0f, 0.0f));
-        mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(orientationYMercury), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::translate(mercuryModelMatrix, glm::vec3(orbitRadiusMercury, 0.0f, 0.0f));
-        mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(rotationYMercury), glm::vec3(0.0f, 1.0f, 0.0f));
-        mercuryModelMatrix = glm::scale(mercuryModelMatrix, glm::vec3(0.0035f, 0.0035f, 0.0035f));
-        
-        mercuryNormalMatrix = glm::inverseTranspose(glm::mat3(view*mercuryModelMatrix));
+        mercuryModelMatrix = glm::translate(mercuryModelMatrix, glm::vec3(0.25f, 0.0f, 0.0f)); // Position relative to the sun
+        //mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(orientationYMercury), glm::vec3(0.0f, 1.0f, 0.0f));
+        mercuryModelMatrix = glm::translate(mercuryModelMatrix, glm::vec3(orbitRadiusMercury, 0.0f, 0.0f)); // Orbital radius
+        //mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(rotationYMercury), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
+        mercuryModelMatrix = glm::scale(mercuryModelMatrix, glm::vec3(0.0035f, 0.0035f, 0.0035f)); // Scale relative to the sun
+
+        mercuryNormalMatrix = glm::inverseTranspose(glm::mat3(view * mercuryModelMatrix));
+
+        // Use the illumination shader program
+        glUseProgram(illumination_shader.Program);
+
+        // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mercuryModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(mercuryNormalMatrix));
 
-        // we render the obj
+        // Option to disable the texture (always false for Mercury)
+        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
+
+        // Draw the Mercury model
         mercuryModel.Draw();
+
        /////////////VENUS////////////
         // Activate the texture with id 1, and bind the id to our loaded texture data
         glActiveTexture(GL_TEXTURE0);
@@ -555,21 +571,29 @@ int main()
         glUniform1i(textureLocation, 0);
         glUniform1f(repeatLocation, 2.0f);
 
-        /// Set transformation Matrix for venus
+        // Venus transformation
         venusModelMatrix = glm::mat4(1.0f);
         venusNormalMatrix = glm::mat3(1.0f);
         venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(0.50f, 0.0f, 0.0f));
-        venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(orientationYVenus), glm::vec3(0.0f, 1.0f, 0.0f));
+        //venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(orientationYVenus), glm::vec3(0.0f, 1.0f, 0.0f));
         venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(orbitRadiusVenus, 0.0f, 0.0f));
-        venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(rotationYVenus), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
+        //venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(rotationYVenus), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
         venusModelMatrix = glm::scale(venusModelMatrix, glm::vec3(0.0087f, 0.0087f, 0.0087f));
-        
-        venusNormalMatrix = glm::inverseTranspose(glm::mat3(view*venusModelMatrix));
+        venusNormalMatrix = glm::inverseTranspose(glm::mat3(view * venusModelMatrix));
+
+        // Use the illumination shader program
+        glUseProgram(illumination_shader.Program);
+
+        // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(venusModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(venusNormalMatrix));
 
-        // we render the obj
+        // Option to disable the texture (always false for Venus)
+        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
+
+        // Draw the Venus model
         venusModel.Draw();
+
          /////////////EARTH////////////
         // Activate the texture with id 1, and bind the id to our loaded texture data
         glActiveTexture(GL_TEXTURE0);
@@ -582,20 +606,28 @@ int main()
         glUniform1i(textureLocation, 0);
         glUniform1f(repeatLocation, 2.0f);
 
-        /// Set transformation Matrix for eart
+        // Earth transformation
         earthModelMatrix = glm::mat4(1.0f);
         earthNormalMatrix = glm::mat3(1.0f);
-        earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(0.75f, 0.0f, 0.0f));
-        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(orientationYEarth), glm::vec3(0.0f, 1.0f, 0.0f));
-        earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(orbitRadiusEarth, 0.0f, 0.0f));
-        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(rotationYEarth), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        earthModelMatrix = glm::scale(earthModelMatrix, glm::vec3(0.0092f, 0.0092f, 0.0092f));
-        earthNormalMatrix = glm::inverseTranspose(glm::mat3(view*earthModelMatrix));
+        earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(0.75f, 0.0f, 0.0f)); // Position relative to the sun
+        earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(orbitRadiusEarth, 0.0f, 0.0f)); // Orbital radius
+        earthModelMatrix = glm::scale(earthModelMatrix, glm::vec3(0.000092f, 0.000092f, 0.000092f)); // Scale relative to the sun
+        earthNormalMatrix = glm::inverseTranspose(glm::mat3(view * earthModelMatrix));
+
+        // Use the illumination shader program
+        glUseProgram(illumination_shader.Program);
+
+        // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(earthModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(earthNormalMatrix));
 
-        // we render the obj
+        // Option to enable or disable the texture
+        bool useTexture = true; // or false, depending on your needs
+        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), useTexture);
+
+        // Draw the Earth model
         earthModel.Draw();
+
 
         /////////////MARS////////////
         // Activate the texture with id 1, and bind the id to our loaded texture data
@@ -608,18 +640,30 @@ int main()
         glUniform1f(ksLocation, Ks);
         glUniform1i(textureLocation, 0);
         glUniform1f(repeatLocation, 2.0f);
+
         // Mars transformation
         marsModelMatrix = glm::mat4(1.0f);
         marsNormalMatrix = glm::mat3(1.0f);
         marsModelMatrix = glm::translate(marsModelMatrix, glm::vec3(1.0f, 0.0f, 0.0f)); // Position relative to the sun
-        marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(orientationYMars), glm::vec3(0.0f, 1.0f, 0.0f));
+        //marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(orientationYMars), glm::vec3(0.0f, 1.0f, 0.0f));
         marsModelMatrix = glm::translate(marsModelMatrix, glm::vec3(orbitRadiusMars, 0.0f, 0.0f));
-        marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(rotationYMars), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        marsModelMatrix = glm::scale(marsModelMatrix, glm::vec3(0.0049f,0.0049f,0.0049f)); // Scale relative to the sun
+        //marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(rotationYMars), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
+        marsModelMatrix = glm::scale(marsModelMatrix, glm::vec3(0.0049f, 0.0049f, 0.0049f)); // Scale relative to the sun
         marsNormalMatrix = glm::inverseTranspose(glm::mat3(view * marsModelMatrix));
+
+        // Use the illumination shader program
+        glUseProgram(illumination_shader.Program);
+
+        // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(marsModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(marsNormalMatrix));
+
+        // Option to enable the texture (always true for Mars)
+        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
+
+        // Draw the Mars model
         marsModel.Draw();
+
 
         /////////////JUPITER////////////
         // Activate the texture with id 1, and bind the id to our loaded texture data
@@ -632,19 +676,32 @@ int main()
         glUniform1f(ksLocation, Ks);
         glUniform1i(textureLocation, 0);
         glUniform1f(repeatLocation, 2.0f);
+
         // Jupiter transformation
         jupiterModelMatrix = glm::mat4(1.0f);
         jupiterNormalMatrix = glm::mat3(1.0f);
         jupiterModelMatrix = glm::translate(jupiterModelMatrix, glm::vec3(1.25f, 0.0f, 0.0f)); // Position relative to the sun
-        jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(orientationYJupiter), glm::vec3(0.0f, 1.0f, 0.0f));
+        //jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(orientationYJupiter), glm::vec3(0.0f, 1.0f, 0.0f));
         jupiterModelMatrix = glm::translate(jupiterModelMatrix, glm::vec3(orbitRadiusJupiter, 0.0f, 0.0f));
-        jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(rotationYJupiter), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        jupiterModelMatrix = glm::scale(jupiterModelMatrix, glm::vec3(0.102f,0.102f,0.102f)); // Scale relative to the sun
+        //jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(rotationYJupiter), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
+        jupiterModelMatrix = glm::scale(jupiterModelMatrix, glm::vec3(0.102f, 0.102f, 0.102f)); // Scale relative to the sun
         jupiterNormalMatrix = glm::inverseTranspose(glm::mat3(view * jupiterModelMatrix));
+
+        // Use the illumination shader program
+        glUseProgram(illumination_shader.Program);
+
+        // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(jupiterModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(jupiterNormalMatrix));
+
+        // Option to enable the texture (always true for Jupiter)
+        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
+
+        // Draw the Jupiter model
         jupiterModel.Draw();
-         /////////////SATURN///////////
+
+
+        /////////////SATURN///////////
         // Activate the texture with id 1, and bind the id to our loaded texture data
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID[6]);
@@ -659,14 +716,28 @@ int main()
         saturnModelMatrix = glm::mat4(1.0f);
         saturnNormalMatrix = glm::mat3(1.0f);
         saturnModelMatrix = glm::translate(saturnModelMatrix, glm::vec3(1.5f, 0.0f, 0.0f)); // Position relative to the sun
-        saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(orientationYSaturn), glm::vec3(0.0f, 1.0f, 0.0f));
+        saturnModelMatrix = glm::rotate(saturnModelMatrix,glm::radians(rotationSaturn),glm::vec3(1.0f, 0.0f, 0.0f));
+        //saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(orientationYSaturn), glm::vec3(0.0f, 1.0f, 0.0f));
         saturnModelMatrix = glm::translate(saturnModelMatrix, glm::vec3(orbitRadiusSaturn, 0.0f, 0.0f));
-        saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(rotationYSaturn), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        saturnModelMatrix = glm::scale(saturnModelMatrix, glm::vec3(0.086f,0.086f,0.086f)); // Scale relative to the sun
+        //saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(rotationYSaturn), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
+        saturnModelMatrix = glm::scale(saturnModelMatrix, glm::vec3(0.00086f,0.00086f,0.00086f)); // Scale relative to the sun
         saturnNormalMatrix = glm::inverseTranspose(glm::mat3(view * saturnModelMatrix));
+        
+        // Use the illumination shader program
+        glUseProgram(illumination_shader.Program);
+
+        // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(saturnModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(saturnNormalMatrix));
+        
+        // Option to enable or disable the texture
+        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), useTexture);
+
+        // Draw the Saturn model
         saturnModel.Draw();
+
+
+
 
          /////////////URANUS////////////
         // Activate the texture with id 1, and bind the id to our loaded texture data

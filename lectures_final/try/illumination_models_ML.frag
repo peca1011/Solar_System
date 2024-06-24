@@ -22,7 +22,7 @@ Universita' degli Studi di Milano
 #version 410 core
 
 // number of lights in the scene
-#define NR_LIGHTS 3
+#define NR_LIGHTS 1
 
 const float PI = 3.14159265359;
 
@@ -71,45 +71,18 @@ subroutine uniform ill_model Illumination_Model_ML;
 //////////////////////////////////////////
 // a subroutine for the Blinn-Phong model for multiple lights
 subroutine(ill_model)
-vec4 BlinnPhong_ML() // this name is the one which is detected by the SetupShaders() function in the main application, and the one used to swap subroutines
-{
-
-    vec2 repeated_UV = mod(interp_UV*repeat,1.0); //repitition on the texture mit mod 
-    vec4 surfaceColor = texture(tex,repeated_UV);
-
-    // ambient component can be calculated at the beginning
-    vec4 color = vec4(Ka*ambientColor,1.0);
-
-    // normalization of the per-fragment normal
+vec4 BlinnPhong_ML() {
+    vec2 repeated_UV = mod(interp_UV * repeat, 1.0);
+    vec4 surfaceColor = texture(tex, repeated_UV);
+    vec4 color = vec4(Ka * ambientColor, 1.0);
     vec3 N = normalize(vNormal);
 
-    //for all the lights in the scene
-    for(int i = 0; i < NR_LIGHTS; i++)
-    {
-        // normalization of the per-fragment light incidence direction
+    for (int i = 0; i < NR_LIGHTS; i++) {
         vec3 L = normalize(lightDirs[i]);
+        float lambertian = max(dot(L, N), 0.0);
 
-        // Lambert coefficient
-        float lambertian = max(dot(L,N), 0.0);
-
-        // if the lambert coefficient is positive, then I can calculate the specular component
-        if(lambertian > 0.0)
-        {
-            // the view vector has been calculated in the vertex shader, already negated to have direction from the mesh to the camera
-            vec3 V = normalize( vViewPosition );
-
-            // in the Blinn-Phong model we do not use the reflection vector, but the half vector
-            vec3 H = normalize(L + V);
-
-            // we use H to calculate the specular component
-            float specAngle = max(dot(H, N), 0.0);
-            // shininess application to the specular component
-            float specular = pow(specAngle, shininess);
-
-            // We add diffusive and specular components to the final color
-            // N.B. ): in this implementation, the sum of the components can be different than 1
-            color += Kd * lambertian * surfaceColor + vec4(
-                            Ks * specular * specularColor,1.0);
+        if (lambertian > 0.0) {
+            color += Kd * lambertian * surfaceColor;
         }
     }
     return color;
@@ -211,6 +184,6 @@ void main(void)
     // we call the pointer function Illumination_Model_ML():
     // the subroutine selected in the main application will be called and executed
   
-
+    
     colorFrag = Illumination_Model_ML();
 }

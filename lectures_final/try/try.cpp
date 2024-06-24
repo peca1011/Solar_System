@@ -54,7 +54,7 @@ positive Z axis points "outside" the screen
 #include <stb_image/stb_image.h>
 
 // number of lights in the scene
-#define NR_LIGHTS 3
+#define NR_LIGHTS 1
 
 // dimensions of application's window
 GLuint screenWidth = 1200, screenHeight = 900;
@@ -176,6 +176,24 @@ vector<GLint> textureID;
 
 // UV repetitions
 GLfloat repeat = 1.0f;
+
+void setShaderUniforms(Shader &shader) {
+    shader.Use();
+    glUniform3fv(glGetUniformLocation(shader.Program, "ambientColor"), 1, ambientColor);
+    glUniform3fv(glGetUniformLocation(shader.Program, "specularColor"), 1, specularColor);
+    glUniform1f(glGetUniformLocation(shader.Program, "Ka"), Ka);
+    glUniform1f(glGetUniformLocation(shader.Program, "Kd"), Kd);
+    glUniform1f(glGetUniformLocation(shader.Program, "Ks"), Ks);
+    glUniform1f(glGetUniformLocation(shader.Program, "shininess"), shininess);
+    glUniform1f(glGetUniformLocation(shader.Program, "alpha"), alpha);
+    glUniform1f(glGetUniformLocation(shader.Program, "F0"), F0);
+
+    // Update light positions
+   // for (int i = 0; i < NR_LIGHTS; i++) {
+    //    std::string lightUniformName = "lights[" + std::to_string(i) + "]";
+    //    glUniform3fv(glGetUniformLocation(shader.Program, lightUniformName.c_str()), 1, glm::value_ptr(lights[i]));
+    //}
+}
 
 /////////////////// MAIN function ///////////////////////
 int main()
@@ -308,7 +326,7 @@ int main()
     glm::mat4 neptuneModelMatrix = glm::mat4(1.0f);
     glm::mat3 neptuneNormalMatrix = glm::mat3(1.0f);
     // Initialize shader
-    Shader myShader("vertex_shader.vert", "fragment_shader.frag");
+   // Shader myShader("vertex_shader.vert", "fragment_shader.frag");
 
     // Light and view positions
     glm::vec3 lightPos(0.0f, 0.0f, 0.0f); // Assuming the sun is at origin
@@ -362,52 +380,65 @@ int main()
           rotationYSaturn += (deltaTime * rotation_speedSaturn);
           rotationYUranus += (deltaTime * rotation_speedUranus);
           rotationYNeptune += (deltaTime * rotation_speedNeptune);
+
+          // Set shader uniforms
+        setShaderUniforms(illumination_shader);
           
-           /////////////////// PLANE ////////////////////////////////////////////////
-         // We render a plane under the objects. We apply the Blinn-Phong model only, and we do not apply the rotation applied to the other objects.
-        illumination_shader.Use();
-        // we search inside the Shader Program the name of the subroutine, and we get the numerical index
-        GLuint index = glGetSubroutineIndex(illumination_shader.Program, GL_FRAGMENT_SHADER, "BlinnPhong_ML_TX");
-        // we activate the subroutine using the index (this is where shaders swapping happens)
-        glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &index);
+        /////////////////// PLANE ////////////////////////////////////////////////
+    // We render a plane under the objects. We apply the Blinn-Phong model only, and we do not apply the rotation applied to the other objects.
+    illumination_shader.Use();
 
-        // we determine the position in the Shader Program of the uniform variables
-        GLint textureLocation = glGetUniformLocation(illumination_shader.Program, "tex");
-        GLint repeatLocation = glGetUniformLocation(illumination_shader.Program, "repeat");
-        GLint matAmbientLocation = glGetUniformLocation(illumination_shader.Program, "ambientColor");
-        GLint matSpecularLocation = glGetUniformLocation(illumination_shader.Program, "specularColor");
-        GLint kaLocation = glGetUniformLocation(illumination_shader.Program, "Ka");
-        GLint kdLocation = glGetUniformLocation(illumination_shader.Program, "Kd");
-        GLint ksLocation = glGetUniformLocation(illumination_shader.Program, "Ks");
-        GLint shineLocation = glGetUniformLocation(illumination_shader.Program, "shininess");
-        GLint alphaLocation = glGetUniformLocation(illumination_shader.Program, "alpha");
-        GLint f0Location = glGetUniformLocation(illumination_shader.Program, "F0");
+    // We search inside the Shader Program the name of the subroutine, and we get the numerical index
+    GLuint index = glGetSubroutineIndex(illumination_shader.Program, GL_FRAGMENT_SHADER, "BlinnPhong_ML_TX");
+    // We activate the subroutine using the index (this is where shaders swapping happens)
+    glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &index);
 
-        // we assign the value to the uniform variables
-        glUniform3fv(matAmbientLocation, 1, ambientColor);
-        glUniform3fv(matSpecularLocation, 1, specularColor);
-        glUniform1f(shineLocation, shininess);
-        glUniform1f(alphaLocation, alpha);
-        glUniform1f(f0Location, F0);
-        // for the plane, we make it mainly Lambertian, by setting at 0 the specular component
-        glUniform1f(kaLocation, 0.0f);
-        glUniform1f(kdLocation, 0.6f);
-        glUniform1f(ksLocation, 0.0f);
+    // We determine the position in the Shader Program of the uniform variables
+    GLint textureLocation = glGetUniformLocation(illumination_shader.Program, "tex");
+    GLint repeatLocation = glGetUniformLocation(illumination_shader.Program, "repeat");
+    GLint matAmbientLocation = glGetUniformLocation(illumination_shader.Program, "ambientColor");
+    //GLint matSpecularLocation = glGetUniformLocation(illumination_shader.Program, "specularColor");
+    GLint kaLocation = glGetUniformLocation(illumination_shader.Program, "Ka");
+    GLint kdLocation = glGetUniformLocation(illumination_shader.Program, "Kd");
+    GLint ksLocation = glGetUniformLocation(illumination_shader.Program, "Ks");
+    GLint shineLocation = glGetUniformLocation(illumination_shader.Program, "shininess");
+    GLint alphaLocation = glGetUniformLocation(illumination_shader.Program, "alpha");
+    GLint f0Location = glGetUniformLocation(illumination_shader.Program, "F0");
 
-        // we pass projection and view matrices to the Shader Program
-        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(view));
+    // We assign the value to the uniform variables
+    glUniform3fv(matAmbientLocation, 1, ambientColor);
+    //glUniform3fv(matSpecularLocation, 1, specularColor);
+    glUniform1f(shineLocation, shininess);
+    glUniform1f(alphaLocation, alpha);
+    glUniform1f(f0Location, F0);
+    // For the plane, we make it mainly Lambertian, by setting at 0 the specular component
+    glUniform1f(kaLocation, 0.0f);
+    glUniform1f(kdLocation, 0.6f);
+    glUniform1f(ksLocation, 0.0f);
 
+    // We pass projection and view matrices to the Shader Program
+    glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(view));
+
+    // Set the plane texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID[1]);
+    glUniform1i(textureLocation, 0);
+    glUniform1f(repeatLocation, 80.0f);
+
+    // Set the model matrix for the plane
+    glm::mat4 planeModelMatrix = glm::mat4(1.0f);
+    glm::mat3 planeNormalMatrix = glm::mat3(1.0f);
+
+    glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(planeModelMatrix));
+    glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(planeNormalMatrix));
+
+    // Draw the plane model
+   // planeModel.Draw();
         
         
 
-        // we activate the texture with id 1, and we bind the id to the loaded texture data
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID[1]);
-
-        // we pass the id of the texture (= to number X in GL_TEXTUREX at line 327) and the number of repetitions for the plane
-        glUniform1i(textureLocation, 1);
-        glUniform1f(repeatLocation, 80.0f);
+      
 
 
 
@@ -435,56 +466,55 @@ int main()
        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(view));
 
      //////////SUN///////////
+
+        illumination_shader.Use();
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID[0]);
 
-    // Use the shader program
-        myShader.Use();
+        glUniform1f(kaLocation, Ka);
+        glUniform1f(kdLocation, Kd);
+        glUniform1f(ksLocation, Ks);
+        glUniform1i(textureLocation, 0);
+        glUniform1f(repeatLocation, repeat);
 
+
+        // Set transformation matrices for the sun
+        glm::mat4 sunModelMatrix = glm::mat4(1.0f);
+        glm::mat3 sunNormalMatrix = glm::mat3(1.0f);
+        sunModelMatrix = glm::translate(sunModelMatrix, lightPos);
+        sunModelMatrix = glm::rotate(sunModelMatrix, glm::radians(orientationYSun), glm::vec3(0.0f, 1.0f, 0.0f));
+        sunModelMatrix = glm::scale(sunModelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+        sunNormalMatrix = glm::inverseTranspose(glm::mat3(view * sunModelMatrix));
+
+        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "sunNormalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
+
+    //Draw the sun model
+        sunModel.Draw();
 // Set light uniforms
-        glUniform3f(glGetUniformLocation(myShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-        glUniform3f(glGetUniformLocation(myShader.Program, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
-        glUniform3f(glGetUniformLocation(myShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f); // White light
-        glUniform3f(glGetUniformLocation(myShader.Program, "objectColor"), 1.0f, 1.0f, 1.0f); // White object color
+       // glUniform3f(glGetUniformLocation(illumination_shader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);//myShader
+       // glUniform3f(glGetUniformLocation(illumination_shader.Program, "viewPos"), viewPos.x, viewPos.y, viewPos.z); //myShader
+       // glUniform3f(glGetUniformLocation(illumination_shader.Program, "lightColor"), 1.0f, 1.0f, 1.0f); // White light +myShader
+        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "objectColor"), 1.0f, 1.0f, 1.0f); // White object color + myShader
 
 // Set the second light (from the right)
         //glUniform3f(glGetUniformLocation(illumination_shader.Program, "light2.position"), lightPos2.x, lightPos2.y, lightPos2.z);
         //glUniform3f(glGetUniformLocation(illumination_shader.Program, "light2.color"), lightColor2.x, lightColor2.y, lightColor2.z);
 
 // Update the view matrix based on the camera position
-        glm::mat4 view = camera.GetViewMatrix();
-        glUniformMatrix4fv(glGetUniformLocation(myShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(myShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        //glm::mat4 view = camera.GetViewMatrix();
+       // glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(view));//myShader
+       // glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));//myShader
 
-        glUniform1f(kaLocation, Ka);
-        glUniform1f(kdLocation, Kd);
-        glUniform1f(ksLocation, Ks);
-        glUniform1i(textureLocation, 0);
-        glUniform1f(repeatLocation, 2.0f);
-
-// Set transformation matrices for the sun
-        glm::mat4 sunModelMatrix = glm::mat4(1.0f);
-        glm::mat3 sunNormalMatrix = glm::mat3(1.0f);
-        sunModelMatrix = glm::translate(sunModelMatrix, lightPos);
-       
-        sunModelMatrix = glm::rotate(sunModelMatrix, glm::radians(orientationYSun), glm::vec3(0.0f, 1.0f, 0.0f));
-        sunModelMatrix = glm::scale(sunModelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
-        sunNormalMatrix = glm::inverseTranspose(glm::mat3(view * sunModelMatrix));
-
-        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
-        //glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
+        
 
 // Pass matrices to the shader
-        glUniformMatrix4fv(glGetUniformLocation(myShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
-        // glUniformMatrix3fv(glGetUniformLocation(myShader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
+        //glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix)); //myShader
+        // glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
 
-// Bind the sun texture
-       // glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, textureID[0]); // Sun texture
-        glUniform1i(glGetUniformLocation(myShader.Program, "tex"), 0);
 
-// Draw the sun model
-        sunModel.Draw();
+
        /////////////MERCURY////////////
         // Activate the texture with id 1, and bind the id to our loaded texture data
         glActiveTexture(GL_TEXTURE0);

@@ -96,12 +96,11 @@ bool firstMouse = true;
 GLfloat deltaTime = 5.0f;
 GLfloat lastFrame = 0.0f;
 
-GLfloat rotationSaturn = 45.0f;
-GLfloat rotationEarth = 0.0f;
+
 // rotation angle on Y axis
 GLfloat orientationYSun, orientationYMercury, orientationYVenus, orientationYEarth, orientationYMars, orientationYJupiter, orientationYSaturn, orientationYUranus, orientationYNeptune= 0.0f;
 // rotation speed on Y axis
-GLfloat spin_speedSun = 0.1f;
+GLfloat spin_speedSun = 2.0f;
 GLfloat spin_speedMercury = 4.0f;
 GLfloat spin_speedVenus = 3.5f;
 GLfloat spin_speedEarth = 3.0f;
@@ -134,7 +133,7 @@ GLfloat angleNeptune = 0.0f;
 // Declare the rotation speeds for each planet's own rotation
 GLfloat rotation_speedMercury = 5.0f;
 GLfloat rotation_speedVenus = 3.0f;
-GLfloat rotation_speedEarth = 1.0f;
+GLfloat rotation_speedEarth = 30.0f;
 GLfloat rotation_speedMars = 0.5f;
 GLfloat rotation_speedJupiter = 2.5f;
 GLfloat rotation_speedSaturn = 2.0f;
@@ -162,6 +161,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 7.0f), GL_TRUE);
 // specular and ambient components
 GLfloat specularColor[] = {1.0,1.0,1.0};
 GLfloat ambientColor[] = {1.0,1.0,1.0};
+
 // weights for the diffusive, specular and ambient components
 GLfloat Kd = 0.8f;
 GLfloat Ks = 0.5f;
@@ -191,23 +191,7 @@ vector<GLint> textureID;
 // UV repetitions
 GLfloat repeat = 1.0f;
 
-void setShaderUniforms(Shader &shader) {
-    shader.Use();
-    glUniform3fv(glGetUniformLocation(shader.Program, "ambientColor"), 1, ambientColor);
-    glUniform3fv(glGetUniformLocation(shader.Program, "specularColor"), 1, specularColor);
-    glUniform1f(glGetUniformLocation(shader.Program, "Ka"), Ka);
-    glUniform1f(glGetUniformLocation(shader.Program, "Kd"), Kd);
-    glUniform1f(glGetUniformLocation(shader.Program, "Ks"), Ks);
-    glUniform1f(glGetUniformLocation(shader.Program, "shininess"), shininess);
-    glUniform1f(glGetUniformLocation(shader.Program, "alpha"), alpha);
-    glUniform1f(glGetUniformLocation(shader.Program, "F0"), F0);
 
-    // Update light positions
-   // for (int i = 0; i < NR_LIGHTS; i++) {
-    //    std::string lightUniformName = "lights[" + std::to_string(i) + "]";
-    //    glUniform3fv(glGetUniformLocation(shader.Program, lightUniformName.c_str()), 1, glm::value_ptr(lights[i]));
-    //}
-}
 
 /////////////////// MAIN function ///////////////////////
 int main()
@@ -261,25 +245,14 @@ int main()
     //the "clear" color for the frame buffer
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
-   // we create the Shader Program used for objects (which presents different subroutines we can switch)
-    //Shader reflection_shader = Shader("reflect_refract.vert", "reflect_refract.frag");
-    // we parse the Shader Program to search for the number and names of the subroutines.
-    // the names are placed in the shaders vector
-   // SetupShader(reflection_shader.Program);
-
-    
-
     // we create the Shader Program used for the environment map
     Shader skybox_shader("skybox.vert", "skybox.frag");
-
+    Shader sun_shader("sun.vert","sun.frag");
     // we create the Shader Program used for objects (which presents different subroutines we can switch)
-    Shader illumination_shader = Shader("illumination_models_ML.vert", "illumination_models_ML.frag");
-    Shader sun_shader = Shader("sun.vert", "sun.frag");
-   
+    Shader illumination_shader = Shader("illumination_models_ML.vert", "illumination_models_ML.frag");   
     // we parse the Shader Program to search for the number and names of the subroutines.
     // the names are placed in the shaders vector
     SetupShader(illumination_shader.Program);
-    
    // we print on console the name of the first subroutine used
     PrintCurrentShader(current_subroutine);
     
@@ -293,7 +266,7 @@ int main()
     Model sunModel("../../models/sun.obj");
     Model mercuryModel("../../models/mercury.obj");
     Model venusModel("../../models/venus.obj");
-    Model earthModel("../../models/earth.obj");
+    Model earthModel("../../models/sphere.obj");
     Model marsModel("../../models/sphere.obj");
     Model jupiterModel("../../models/sphere.obj");
     Model saturnModel("../../models/saturn.obj");
@@ -344,16 +317,12 @@ int main()
 
     glm::mat4 neptuneModelMatrix = glm::mat4(1.0f);
     glm::mat3 neptuneNormalMatrix = glm::mat3(1.0f);
-    // Initialize shader
-   // Shader myShader("vertex_shader.vert", "fragment_shader.frag");
-
+    
     // Light and view positions
-    glm::vec3 lightPos(0.0f, 0.0f, 0.0f); // Assuming the sun is at origin
+    glm::vec3 lightPos(10.0f, 10.0f, 10.0f); // Assuming the sun is at origin
     glm::vec3 viewPos = camera.Position;  // Use your camera's position
 
-    //glm::vec3 lightPos2(10.0f, 0.0f, 0.0f); // Position of the new light source on the right side
-    //glm::vec3 lightColor2(1.0f, 1.0f, 1.0f); // Color of the new light source (white light)
-    // Rendering loop: this code is executed at each frame
+   // Rendering loop: this code is executed at each frame
     while(!glfwWindowShouldClose(window))
     { 
         
@@ -383,7 +352,7 @@ int main()
         // if animated rotation is activated, than we increment the rotation angle using delta time and the rotation speed parameter
         if (spinning)
           //for rotation around itself
-          orientationYSun+=(deltaTime*spin_speedSun);
+          orientationYSun+= (deltaTime*spin_speedSun);
           orientationYMercury += (deltaTime * spin_speedMercury);
           orientationYVenus += (deltaTime * spin_speedVenus);
           orientationYEarth += (deltaTime * spin_speedEarth);
@@ -395,7 +364,7 @@ int main()
           //rotation around sun
           angleMercury = currentFrame * spin_speedMercury;
           angleVenus = currentFrame * spin_speedVenus;
-          angleEarth = (spin_speedEarth * currentFrame );
+          angleEarth = spin_speedEarth * currentFrame;
           angleMars = currentFrame * spin_speedMars;
           angleJupiter = currentFrame * spin_speedJupiter;
           angleSaturn = currentFrame * spin_speedSaturn;
@@ -412,13 +381,10 @@ int main()
           rotationYUranus += (deltaTime * rotation_speedUranus);
           rotationYNeptune += (deltaTime * rotation_speedNeptune);
 
-          // Set shader uniforms
-        //setShaderUniforms(illumination_shader);
         illumination_shader.Use();
           
         /////////////////// PLANE ////////////////////////////////////////////////
-    // We render a plane under the objects. We apply the Blinn-Phong model only, and we do not apply the rotation applied to the other objects.
-    //illumination_shader.Use();
+   
 
     // We search inside the Shader Program the name of the subroutine, and we get the numerical index
     GLuint index = glGetSubroutineIndex(illumination_shader.Program, GL_FRAGMENT_SHADER, "BlinnPhong_ML_TX");
@@ -426,9 +392,12 @@ int main()
     glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &index);
 
     // We determine the position in the Shader Program of the uniform variables
+    GLint lightPosLocation = glGetUniformLocation(illumination_shader.Program, "lightPos");
     GLint textureLocation = glGetUniformLocation(illumination_shader.Program, "tex");
-
+    GLint textureLoc = glGetUniformLocation(sun_shader.Program, "tex");
     GLint repeatLocation = glGetUniformLocation(illumination_shader.Program, "repeat");
+    GLint repeatLoc = glGetUniformLocation(sun_shader.Program, "repeat");
+
     GLint matAmbientLocation = glGetUniformLocation(illumination_shader.Program, "ambientColor");
     GLint matSpecularLocation = glGetUniformLocation(illumination_shader.Program, "specularColor");
     GLint kaLocation = glGetUniformLocation(illumination_shader.Program, "Ka");
@@ -438,57 +407,8 @@ int main()
     GLint alphaLocation = glGetUniformLocation(illumination_shader.Program, "alpha");
     GLint f0Location = glGetUniformLocation(illumination_shader.Program, "F0");
 
-    // We assign the value to the uniform variables
-    //glUniform3fv(matAmbientLocation, 1, ambientColor);
-    //glUniform3fv(matSpecularLocation, 1, specularColor);
-    //glUniform1f(shineLocation, shininess);
-   // glUniform1f(alphaLocation, alpha);
-   // glUniform1f(f0Location, F0);
-    // For the plane, we make it mainly Lambertian, by setting at 0 the specular component
-    //glUniform1f(kaLocation, 0.0f);
-    //glUniform1f(kdLocation, 0.6f);
-   // glUniform1f(ksLocation, 0.0f);
-
-    // We pass projection and view matrices to the Shader Program
-    //glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
-    //glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(view));
-
-    // Set the plane texture
-    //glActiveTexture(GL_TEXTURE0);
-   // glBindTexture(GL_TEXTURE_2D, textureID[1]);
-   // glUniform1i(textureLocation, 0);
-   // glUniform1f(repeatLocation, 80.0f);
-
-    // Set the model matrix for the plane
-    //glm::mat4 planeModelMatrix = glm::mat4(1.0f);
-    //glm::mat3 planeNormalMatrix = glm::mat3(1.0f);
-
-    //glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(planeModelMatrix));
-    //glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(planeNormalMatrix));
-
-    // Draw the plane model
-   // planeModel.Draw();
-        
-        
-
-      
-
-
-
+    glUniform3fv(lightPosLocation, 1, glm::value_ptr(lightPos));
        ////////////////// OBJECT ////////////////////////////////////////////////
-        // We "install" the selected Shader Program as part of the current rendering process
-       // reflection_shader.Use();
-        // we search inside the Shader Program the name of the subroutine currently selected, and we get the numerical index
-        // GLuint index = glGetSubroutineIndex(reflection_shader.Program, GL_FRAGMENT_SHADER, shaders[current_subroutine].c_str());
-        // we activate the subroutine using the index (this is where shaders swapping happens)
-        //glUniformSubroutinesuiv( GL_FRAGMENT_SHADER, 1, &index);
-
-
-        // We search inside the Shader Program the name of the subroutine currently selected, and we get the numerical index
-        index = glGetSubroutineIndex(illumination_shader.Program, GL_FRAGMENT_SHADER, shaders[current_subroutine].c_str());
-        glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &index);
-
-
         // we activate the cube map
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, textureCube);
@@ -500,75 +420,33 @@ int main()
 
 
     //////////SUN///////////
-
-        illumination_shader.Use();
-
-
+        sun_shader.Use();
+       
+        
+        
         // Bind the texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID[0]);
 
-        glUniform1i(textureLocation, 0);
-        glUniform1f(repeatLocation, 1.0f);
-
         // Set transformation matrices for the sun
-        glm::mat4 sunModelMatrix = glm::mat4(1.0f);
-        glm::mat3 sunNormalMatrix = glm::mat3(1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(sun_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(sun_shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniform1i(textureLoc, 0);
+        glUniform1f(repeatLoc, 1.0f);
+
+        sunModelMatrix = glm::mat4(1.0f);
+        sunNormalMatrix = glm::mat3(1.0f);
         
         sunModelMatrix = glm::rotate(sunModelMatrix, glm::radians(orientationYSun), glm::vec3(0.0f, 1.0f, 0.0f));
-        //sunModelMatrix = glm::scale(sunModelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
-        //sunModelMatrix = glm::translate(sunModelMatrix, lightPos);
+        sunModelMatrix = glm::scale(sunModelMatrix, glm::vec3(1.5f, 1.5f, 1.5f));
         
-        sunNormalMatrix = glm::inverseTranspose(glm::mat3(view * sunModelMatrix));
-
-        glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
-        glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "sunNormalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
-
-        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "ambientColor"), 1.0f, 1.0f, 1.0f);
-        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "specularColor"), 1.0f, 1.0f, 1.0f);
-        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "lights[0]"), lightPos.x, lightPos.y, lightPos.z);
-        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "viewPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-        
-        // Set GGX specific uniforms
-        //glUniform1f(glGetUniformLocation(illumination_shader.Program, "shininess"), shininess);
-        //glUniform1f(glGetUniformLocation(illumination_shader.Program, "alpha"), alpha);
-        //glUniform1f(glGetUniformLocation(illumination_shader.Program, "F0"), F0);
-
-        // Setzen der Lichtpositionen
-        //glm::vec3 lightPositions[NR_LIGHTS] = { glm::vec3(0.0f, 0.0f, 0.0f) }; // Beispielhafte Lichtpositionen
-        //for (int i = 0; i < NR_LIGHTS; ++i) {
-          //  std::string uniformName = "lights[" + std::to_string(i) + "]";
-            //glUniform3fv(glGetUniformLocation(illumination_shader.Program, uniformName.c_str()), 1, glm::value_ptr(lightPositions[i]));
-        //}
-        // Draw the sun model
+        glUniformMatrix4fv(glGetUniformLocation(sun_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix));
+        glUniformMatrix3fv(glGetUniformLocation(sun_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
+   
         sunModel.Draw();
 
-        
-     
-    
-// Set light uniforms
-       // glUniform3f(glGetUniformLocation(illumination_shader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);//myShader
-       // glUniform3f(glGetUniformLocation(illumination_shader.Program, "viewPos"), viewPos.x, viewPos.y, viewPos.z); //myShader
-       // glUniform3f(glGetUniformLocation(illumination_shader.Program, "lightColor"), 1.0f, 1.0f, 1.0f); // White light +myShader
-        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "objectColor"), 1.0f, 1.0f, 1.0f); // White object color + myShader
-
-// Set the second light (from the right)
-        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "light2.position"), lightPos2.x, lightPos2.y, lightPos2.z);
-        //glUniform3f(glGetUniformLocation(illumination_shader.Program, "light2.color"), lightColor2.x, lightColor2.y, lightColor2.z);
-
-// Update the view matrix based on the camera position
-        //glm::mat4 view = camera.GetViewMatrix();
-       // glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(view));//myShader
-       // glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));//myShader
-
-        
-
-// Pass matrices to the shader
-        //glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(sunModelMatrix)); //myShader
-        // glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(sunNormalMatrix));
-        
        /////////////MERCURY////////////
-
+        illumination_shader.Use();
         // Activate the texture with id 1, and bind the id to our loaded texture data
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID[1]);
@@ -582,25 +460,16 @@ int main()
 
         mercuryModelMatrix = glm::mat4(1.0f);
         mercuryNormalMatrix = glm::mat3(1.0f);
-
-        mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(angleMercury), glm::vec3(0.0f, 1.0f, 0.0f));// orient orbit angle around the sun
-        mercuryModelMatrix = glm::translate(mercuryModelMatrix, glm::vec3(orbitRadiusMercury, 0.0f, 0.0f)); // move mervury to Orbital radius
-         //mercuryModelMatrix = glm::translate(mercuryModelMatrix, glm::vec3(2.5f, 0.0f, 0.0f)); // Position relative to the sun
         mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(orientationYMercury), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-       
-        mercuryModelMatrix = glm::scale(mercuryModelMatrix, glm::vec3(0.035f, 0.035f, 0.035f)); // Scale relative to the sun
-
+        mercuryModelMatrix = glm::translate(mercuryModelMatrix, glm::vec3(orbitRadiusMercury, 0.0f, 0.0f)); // move mervury to Orbital radius
+        mercuryModelMatrix = glm::rotate(mercuryModelMatrix, glm::radians(angleMercury), glm::vec3(0.0f, 1.0f, 0.0f));// orient orbit angle around the sun
+        mercuryModelMatrix = glm::scale(mercuryModelMatrix, glm::vec3(0.1596f, 0.1596f, 0.1596f)); // Scale relative to the sun
         mercuryNormalMatrix = glm::inverseTranspose(glm::mat3(view * mercuryModelMatrix));
 
-        // Use the illumination shader program
-        glUseProgram(illumination_shader.Program);
-
+        
         // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mercuryModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(mercuryNormalMatrix));
-
-        // Option to disable the texture (always false for Mercury)
-        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
 
         // Draw the Mercury model
         mercuryModel.Draw();
@@ -620,25 +489,17 @@ int main()
         // Venus transformation
         venusModelMatrix = glm::mat4(1.0f);
         venusNormalMatrix = glm::mat3(1.0f);
-        venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(angleVenus), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(orbitRadiusVenus, 0.0f, 0.0f)); //move venus to its orbit
-
-       // venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(0.50f, 0.0f, 0.0f)); //position relative to sun
         venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(orientationYVenus), glm::vec3(0.0f, 1.0f, 0.0f));//orient orbit
-        
-       
-        venusModelMatrix = glm::scale(venusModelMatrix, glm::vec3(0.0087f, 0.0087f, 0.0087f));
+        venusModelMatrix = glm::translate(venusModelMatrix, glm::vec3(orbitRadiusVenus, 0.0f, 0.0f)); //move venus to its orbit
+        venusModelMatrix = glm::rotate(venusModelMatrix, glm::radians(angleVenus), glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
+        venusModelMatrix = glm::scale(venusModelMatrix, glm::vec3(0.399f, 0.399f, 0.399f));
         venusNormalMatrix = glm::inverseTranspose(glm::mat3(view * venusModelMatrix));
-        // Use the illumination shader program
-        glUseProgram(illumination_shader.Program);
-
+        
         // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(venusModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(venusNormalMatrix));
 
-        // Option to disable the texture (always false for Venus)
-        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
-
+        
         // Draw the Venus model
         venusModel.Draw();
 
@@ -657,29 +518,19 @@ int main()
         // Earth transformation
         earthModelMatrix = glm::mat4(1.0f);
         earthNormalMatrix = glm::mat3(1.0f);
-        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(angleEarth), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around itself       
-        earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(orbitRadiusEarth, 0.0f, 0.0f)); //move earth to orbit of radius
-        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(orientationYEarth), glm::vec3(0.0f, 0.0f, 1.0f)); //orient orbit angle around the sun
-
-       // earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(6.5f, 0.0f, 0.0f)); // Position relative to the sun
-    
-        //earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(rotationYEarth), glm::vec3(0.0f, 0.0f, -1.0f)); // Planet's own rotation
         
-        earthModelMatrix = glm::scale(earthModelMatrix, glm::vec3(0.00092f, 0.00092f, 0.00092f)); // Scale relative to the sun
+        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(orientationYEarth), glm::vec3(0.0f, 1.0f, 0.0f)); //orient orbit angle around the sun
+        earthModelMatrix = glm::translate(earthModelMatrix, glm::vec3(orbitRadiusEarth, 0.0f, 0.0f)); //move earth to orbit of radius
+        earthModelMatrix = glm::rotate(earthModelMatrix, glm::radians(angleEarth), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around itself       
+        earthModelMatrix = glm::scale(earthModelMatrix, glm::vec3(0.42f, 0.42f, 0.42f)); // Scale relative to the sun
         earthNormalMatrix = glm::inverseTranspose(glm::mat3(view * earthModelMatrix));
 
-        // Use the illumination shader program
-        glUseProgram(illumination_shader.Program);
-
+        
         // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(earthModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(earthNormalMatrix));
 
-        // Option to enable or disable the texture
-        bool useTexture = true; // or false, depending on your needs
-        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), useTexture);
-
+        
         // Draw the Earth model
         earthModel.Draw();
 
@@ -698,23 +549,17 @@ int main()
 
         // Mars transformation
         marsModelMatrix = glm::mat4(1.0f);
-        marsNormalMatrix = glm::mat3(1.0f);
-        //marsModelMatrix = glm::translate(marsModelMatrix, glm::vec3(9.0f, 0.0f, 0.0f)); // Position relative to the sun
+        marsNormalMatrix = glm::mat3(1.0f); 
         marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(orientationYMars), glm::vec3(0.0f, 1.0f, 0.0f));
         marsModelMatrix = glm::translate(marsModelMatrix, glm::vec3(orbitRadiusMars, 0.0f, 0.0f));
         marsModelMatrix = glm::rotate(marsModelMatrix, angleMars, glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        marsModelMatrix = glm::scale(marsModelMatrix, glm::vec3(0.049f, 0.049f, 0.049f)); // Scale relative to the sun
+        marsModelMatrix = glm::scale(marsModelMatrix, glm::vec3(0.2226f, 0.2226f, 0.2226f)); // Scale relative to the sun
         marsNormalMatrix = glm::inverseTranspose(glm::mat3(view * marsModelMatrix));
 
-        // Use the illumination shader program
-        glUseProgram(illumination_shader.Program);
-
+        
         // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(marsModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(marsNormalMatrix));
-
-        // Option to enable the texture (always true for Mars)
-        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
 
         // Draw the Mars model
         marsModel.Draw();
@@ -735,23 +580,18 @@ int main()
         // Jupiter transformation
         jupiterModelMatrix = glm::mat4(1.0f);
         jupiterNormalMatrix = glm::mat3(1.0f);
-        //jupiterModelMatrix = glm::translate(jupiterModelMatrix, glm::vec3(15.0f, 0.0f, 0.0f)); // Position relative to the sun
         jupiterModelMatrix = glm::rotate(jupiterModelMatrix, glm::radians(orientationYJupiter), glm::vec3(0.0f, 1.0f, 0.0f));
         jupiterModelMatrix = glm::translate(jupiterModelMatrix, glm::vec3(orbitRadiusJupiter, 0.0f, 0.0f));
         jupiterModelMatrix = glm::rotate(jupiterModelMatrix, angleJupiter, glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        jupiterModelMatrix = glm::scale(jupiterModelMatrix, glm::vec3(0.502f, 0.502f, 0.502f)); // Scale relative to the sun
+        jupiterModelMatrix = glm::scale(jupiterModelMatrix, glm::vec3(0.90f, 0.9f, 0.9f)); // Scale relative to the sun
         jupiterNormalMatrix = glm::inverseTranspose(glm::mat3(view * jupiterModelMatrix));
 
-        // Use the illumination shader program
-        glUseProgram(illumination_shader.Program);
-
+        
         // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(jupiterModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(jupiterNormalMatrix));
 
-        // Option to enable the texture (always true for Jupiter)
-        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
-
+        
         // Draw the Jupiter model
         jupiterModel.Draw();
 
@@ -772,23 +612,18 @@ int main()
         saturnModelMatrix = glm::mat4(1.0f);
         saturnNormalMatrix = glm::mat3(1.0f);
         saturnModelMatrix = glm::rotate(saturnModelMatrix,glm::radians(90.0f),glm::vec3(1.0f, 0.0f, 0.0f)); 
-        //saturnModelMatrix = glm::translate(saturnModelMatrix, glm::vec3(20.0f, 0.0f, 0.0f)); // Position relative to the sun
         saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(orientationYSaturn), glm::vec3(0.0f, 0.0f, -1.0f)); //orient orbit angle around the sun
         saturnModelMatrix = glm::translate(saturnModelMatrix, glm::vec3(orbitRadiusSaturn, 0.0f, 0.0f)); //move planet to orbit radius
         saturnModelMatrix = glm::rotate(saturnModelMatrix, angleSaturn, glm::vec3(0.0f, 0.0f, 1.0f)); //rotate around itself
-        saturnModelMatrix = glm::scale(saturnModelMatrix, glm::vec3(0.00086f,0.00086f,0.00086f)); // Scale relative to the sun
+        saturnModelMatrix = glm::scale(saturnModelMatrix, glm::vec3(0.004f,0.004f,0.004f)); // Scale relative to the sun
         saturnNormalMatrix = glm::inverseTranspose(glm::mat3(view * saturnModelMatrix));
         
-        // Use the illumination shader program
-        glUseProgram(illumination_shader.Program);
 
         // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(saturnModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(saturnNormalMatrix));
         
-        // Option to enable or disable the texture
-        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), useTexture);
-
+        
         // Draw the Saturn model
         saturnModel.Draw();
 
@@ -810,21 +645,14 @@ int main()
         // Uranus transformation
         uranusModelMatrix = glm::mat4(1.0f);
         uranusNormalMatrix = glm::mat3(1.0f);
-        //uranusModelMatrix = glm::translate(uranusModelMatrix, glm::vec3(25.0f, 0.0f, 0.0f)); // Position relative to the sun
         uranusModelMatrix = glm::rotate(uranusModelMatrix, glm::radians(orientationYUranus), glm::vec3(0.0f, 1.0f, 0.0f));
         uranusModelMatrix = glm::translate(uranusModelMatrix, glm::vec3(orbitRadiusUranus, 0.0f, 0.0f)); //move uranus to orbit of radius
         uranusModelMatrix = glm::rotate(uranusModelMatrix, angleUranus, glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        uranusModelMatrix = glm::scale(uranusModelMatrix, glm::vec3(0.36f, 0.36f, 0.36f)); // Scale relative to the sun
+        uranusModelMatrix = glm::scale(uranusModelMatrix, glm::vec3(0.70f, 0.7f, 0.7f)); // Scale relative to the sun
         uranusNormalMatrix = glm::inverseTranspose(glm::mat3(view * uranusModelMatrix));
 
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(uranusModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(uranusNormalMatrix));
-
-        // Use the shader program
-        glUseProgram(illumination_shader.Program);
-
-        // Activate or deactivate the texture
-        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), useTexture);
 
         // Draw the Uranus model
         uranusModel.Draw();
@@ -845,21 +673,17 @@ int main()
         // Neptune transformation
         neptuneModelMatrix = glm::mat4(1.0f);
         neptuneNormalMatrix = glm::mat3(1.0f);
-        //neptuneModelMatrix = glm::translate(neptuneModelMatrix, glm::vec3(30.0f, 0.0f, 0.0f)); // Position relative to the sun
         neptuneModelMatrix = glm::rotate(neptuneModelMatrix, glm::radians(orientationYNeptune), glm::vec3(0.0f, 1.0f, 0.0f)); //orient orbit angle around the sun
         neptuneModelMatrix = glm::translate(neptuneModelMatrix, glm::vec3(orbitRadiusNeptune, 0.0f, 0.0f)); // move neptune to the orbit of the radius
         neptuneModelMatrix = glm::rotate(neptuneModelMatrix, angleNeptune, glm::vec3(0.0f, 1.0f, 0.0f)); // Routate around itself
-        neptuneModelMatrix = glm::scale(neptuneModelMatrix, glm::vec3(0.35f, 0.35f, 0.35f)); // Scale relative to the sun
+        neptuneModelMatrix = glm::scale(neptuneModelMatrix, glm::vec3(0.65f, 0.65f, 0.65f)); // Scale relative to the sun
         neptuneNormalMatrix = glm::inverseTranspose(glm::mat3(view * neptuneModelMatrix));
 
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(neptuneModelMatrix));
         glUniformMatrix3fv(glGetUniformLocation(illumination_shader.Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(neptuneNormalMatrix));
 
-        // Use the shader program
-        glUseProgram(illumination_shader.Program);
-
         // Activate or deactivate the texture
-        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), useTexture);
+        glUniform1i(glGetUniformLocation(illumination_shader.Program, "useTexture"), true);
 
         // Draw the Neptune model
         neptuneModel.Draw();
@@ -872,9 +696,7 @@ int main()
         //Thus, we set the depth test to GL_LEQUAL, in order to let the fragments of the background pass the depth test (because they have the maximum depth possible, and the default setting is GL_LESS)
         glDepthFunc(GL_LEQUAL);
         skybox_shader.Use();
-        // we activate the cube map
-        //glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_CUBE_MAP, textureCube);
+        
          // we pass projection and view matrices to the Shader Program of the skybox
         glUniformMatrix4fv(glGetUniformLocation(skybox_shader.Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projection));
         // to have the background fixed during camera movements, we have to remove the translations from the view matrix
@@ -898,9 +720,9 @@ int main()
 
     }
     illumination_shader.Delete();
+    sun_shader.Delete();
     // when I exit from the graphics loop, it is because the application is closing
     // we delete the Shader Program
-    //reflection_shader.Delete();
     skybox_shader.Delete();
     // we close and delete the created context
     glfwTerminate();

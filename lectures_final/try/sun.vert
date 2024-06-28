@@ -1,7 +1,6 @@
 #version 410 core
 
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;  // This can be removed if normals are not needed.
 layout (location = 2) in vec2 aTexCoords;
 
 uniform mat4 modelMatrix;
@@ -14,6 +13,5 @@ void main() {
     interp_UV = aTexCoords;
 
     vec4 mvPosition = viewMatrix * modelMatrix * vec4(aPos, 1.0);
-
     gl_Position = projectionMatrix * mvPosition;
 }

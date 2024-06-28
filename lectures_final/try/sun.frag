@@ -1,17 +1,24 @@
 #version 410 core
 
-const float PI = 3.14159265359;
+// output shader variable
+out vec4 colorFrag;
 
-out vec4 FragColor;
-
+// interpolated texture coordinates
 in vec2 interp_UV;
 
+// texture repetitions
 uniform float repeat;
-uniform sampler2D tex;
-uniform bool useTexture;
 
-void main() {
+// texture sampler
+uniform sampler2D tex;
+
+// main function
+void main(void)
+{
+    // we repeat the UVs and we sample the texture
     vec2 repeated_UV = mod(interp_UV * repeat, 1.0);
-    vec4 surfaceColor = useTexture ? texture(tex, repeated_UV) : vec4(1.0);
-    FragColor = surfaceColor;
+    vec4 surfaceColor = texture(tex, repeated_UV);
+
+    // set the final fragment color
+    colorFrag = surfaceColor;
 }

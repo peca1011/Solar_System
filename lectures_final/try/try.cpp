@@ -260,7 +260,7 @@ int main()
     textureID.push_back(LoadTexture("../../textures/mars.jpg"));
     textureID.push_back(LoadTexture("../../textures/jupiter.jpg"));
     textureID.push_back(LoadTexture("../../textures/saturn.jpg"));
-    textureID.push_back(LoadTexture("../../textures/uranus.jpg"));
+    textureID.push_back(LoadTexture("../../textures/uranus1.jpg"));
     textureID.push_back(LoadTexture("../../textures/neptune.jpg"));
 
 
@@ -531,7 +531,7 @@ int main()
         marsModelMatrix = glm::rotate(marsModelMatrix, glm::radians(orientationYMars), glm::vec3(0.0f, 1.0f, 0.0f));
         marsModelMatrix = glm::translate(marsModelMatrix, glm::vec3(orbitRadiusMars, 0.0f, 0.0f));
         marsModelMatrix = glm::rotate(marsModelMatrix, angleMars, glm::vec3(0.0f, 1.0f, 0.0f)); // Planet's own rotation
-        marsModelMatrix = glm::scale(marsModelMatrix, glm::vec3(0.2226f, 0.2226f, 0.2226f)); // Scale relative to the sun
+        marsModelMatrix = glm::scale(marsModelMatrix, glm::vec3(0.4446f, 0.4446f, 0.4446f)); // Scale relative to the sun
         marsNormalMatrix = glm::inverseTranspose(glm::mat3(view * marsModelMatrix));
 
         
@@ -589,13 +589,13 @@ int main()
         
         saturnModelMatrix = glm::mat4(1.0f);
         saturnNormalMatrix = glm::mat3(1.0f);
+       
         saturnModelMatrix = glm::rotate(saturnModelMatrix,glm::radians(90.0f),glm::vec3(1.0f, 0.0f, 0.0f)); 
         saturnModelMatrix = glm::rotate(saturnModelMatrix, glm::radians(orientationYSaturn), glm::vec3(0.0f, 0.0f, -1.0f)); //orient orbit angle around the sun
         saturnModelMatrix = glm::translate(saturnModelMatrix, glm::vec3(orbitRadiusSaturn, 0.0f, 0.0f)); //move planet to orbit radius
         saturnModelMatrix = glm::rotate(saturnModelMatrix, angleSaturn, glm::vec3(0.0f, 0.0f, 1.0f)); //rotate around itself
         saturnModelMatrix = glm::scale(saturnModelMatrix, glm::vec3(0.004f,0.004f,0.004f)); // Scale relative to the sun
         saturnNormalMatrix = glm::inverseTranspose(glm::mat3(view * saturnModelMatrix));
-        
 
         // Set the transformation matrices for the shader
         glUniformMatrix4fv(glGetUniformLocation(illumination_shader.Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(saturnModelMatrix));
@@ -924,6 +924,11 @@ void apply_camera_movements()
         camera.ProcessKeyboard(LEFT, deltaTime);
     if(keys[GLFW_KEY_D])
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    if(keys[GLFW_KEY_UP])
+        camera.ProcessKeyboard(UP, deltaTime);
+    if(keys[GLFW_KEY_DOWN])
+        camera.ProcessKeyboard(DOWN, deltaTime);
+
 }
 
 //////////////////////////////////////////

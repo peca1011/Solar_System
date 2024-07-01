@@ -137,7 +137,6 @@ GLboolean wireframe = GL_FALSE;
 // we create a camera. We pass the initial position as a paramenter to the constructor. The last boolean tells if we want a camera "anchored" to the ground
 Camera camera(glm::vec3(0.0f, 0.0f, 7.0f), GL_TRUE);
 
-
 // specular and ambient components
 GLfloat specularColor[] = {1.0,1.0,1.0};
 GLfloat ambientColor[] = {1.0,1.0,1.0};
@@ -148,11 +147,6 @@ GLfloat Ks = 0.5f;
 GLfloat Ka = 0.01f;
 // shininess coefficient for Blinn-Phong shader
 GLfloat shininess = 25.0f;
-
-// roughness index for GGX shader
-GLfloat alpha = 0.2f;
-// Fresnel reflectance at 0 degree (Schlik's approximation)
-GLfloat F0 = 0.9f;
 
 // ratio between refraction indices (Fresnel shader) of air (1.00) and glass (1.52)
 GLfloat Eta = 1.0f/1.52f;
@@ -371,15 +365,14 @@ int main()
     GLint textureLoc = glGetUniformLocation(sun_shader.Program, "tex");
     GLint repeatLocation = glGetUniformLocation(illumination_shader.Program, "repeat");
     GLint repeatLoc = glGetUniformLocation(sun_shader.Program, "repeat");
-
     GLint matAmbientLocation = glGetUniformLocation(illumination_shader.Program, "ambientColor");
     GLint matSpecularLocation = glGetUniformLocation(illumination_shader.Program, "specularColor");
     GLint kaLocation = glGetUniformLocation(illumination_shader.Program, "Ka");
     GLint kdLocation = glGetUniformLocation(illumination_shader.Program, "Kd");
     GLint ksLocation = glGetUniformLocation(illumination_shader.Program, "Ks");
     GLint shineLocation = glGetUniformLocation(illumination_shader.Program, "shininess");
-    GLint alphaLocation = glGetUniformLocation(illumination_shader.Program, "alpha");
-    GLint f0Location = glGetUniformLocation(illumination_shader.Program, "F0");
+    //GLint alphaLocation = glGetUniformLocation(illumination_shader.Program, "alpha");
+
 
     for (GLuint i = 0; i < NR_LIGHTS; i++)
         {
